@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinVision Pro - 財務分析系統</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .glass-modal { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+        .chart-container { position: relative; height: 300px; width: 100%; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 selection:bg-indigo-100">
+
+    <!-- Navbar -->
+    <nav class="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200 px-4 py-3">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <div class="bg-indigo-600 p-2 rounded-xl text-white shadow-lg shadow-indigo-200">
+                    <i data-lucide="activity"></i>
+                </div>
+                <h1 class="text-xl font-bold tracking-tight text-slate-800">FinVision <span class="text-indigo-600">Pro</span></h1>
+            </div>
+            <div class="flex items-center gap-4">
+                <span id="user-display" class="hidden md:block text-xs text-slate-400 font-medium font-mono">Connecting...</span>
+                <button onclick="toggleModal(true)" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-2 transition-all active:scale-95 shadow-md">
+                    <i data-lucide="plus" size="18"></i> 新增紀錄
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-6xl mx-auto p-4 md:p-6 space-y-6">
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow group">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="p-3 bg-indigo-50 text-indigo-600 rounded-2xl group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                        <i data-lucide="wallet"></i>
+                    </div>
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">總資產餘額</span>
+                </div>
+                <h2 id="total-balance" class="text-3xl font-black text-slate-800">$0</h2>
+            </div>
+
+            <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow group">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="p-3 bg-emerald-50 text-emerald-600 rounded-2xl group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                        <i data-lucide="trending-up"></i>
+                    </div>
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">本月總收入</span>
+                </div>
+                <h2 id="total-income" class="text-3xl font-black text-emerald-600">$0</h2>
+            </div>
+
+            <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow group">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="p-3 bg-rose-50 text-rose-600 rounded-2xl group-hover:bg-rose-600 group-hover:text-white transition-colors">
+                        <i data-lucide="trending-down"></i>
+                    </div>
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">本月總支出</span>
+                </div>
+                <h2 id="total-expense" class="text-3xl font-black text-rose-500">$0</h2>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                <h3 class="font-bold text-lg flex items-center gap-2 mb-4">
+                    <i data-lucide="line-chart" class="text-indigo-600"></i> 最近 7 天收支趨勢
+                </h3>
+                <div class="chart-container">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                <h3 class="font-bold text-lg flex items-center gap-2 mb-4">
+                    <i data-lucide="pie-chart" class="text-indigo-600"></i> 支出分類佔比
+                </h3>
+                <div class="chart-container flex items-center justify-center">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transaction List -->
+        <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+            <div class="p-6 border-b border-slate-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <h3 class="font-bold text-lg flex items-center gap-2">
+                    <i data-lucide="list" class="text-indigo-600"></i> 最近交易紀錄
+                </h3>
+                <div class="flex gap-2 bg-slate-100 p-1 rounded-xl" id="filters">
+                    <button onclick="setFilter('all')" data-filter="all" class="filter-btn active px-3 py-1.5 text-xs font-bold rounded-lg transition-all bg-white text-indigo-600 shadow-sm">全部</button>
+                    <button onclick="setFilter('income')" data-filter="income" class="filter-btn px-3 py-1.5 text-xs font-bold rounded-lg transition-all text-slate-500 hover:text-slate-700">收入</button>
+                    <button onclick="setFilter('expense')" data-filter="expense" class="filter-btn px-3 py-1.5 text-xs font-bold rounded-lg transition-all text-slate-500 hover:text-slate-700">支出</button>
+                </div>
+            </div>
+            <div id="transaction-list" class="divide-y divide-slate-50 min-h-[200px]">
+                <!-- Transactions will be injected here -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal -->
+    <div id="modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onclick="toggleModal(false)"></div>
+        <div class="relative bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden">
+            <div class="p-6 bg-indigo-600 text-white flex justify-between items-center">
+                <h3 class="text-xl font-bold">新增財務紀錄</h3>
+                <button onclick="toggleModal(false)" class="hover:rotate-90 transition-transform">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <form id="transaction-form" class="p-6 space-y-4">
+                <div class="flex gap-2 p-1 bg-slate-100 rounded-2xl">
+                    <button type="button" onclick="setFormType('expense')" id="type-expense" class="type-btn flex-1 py-2 text-sm font-bold rounded-xl transition-all bg-white text-rose-500 shadow-sm">支出</button>
+                    <button type="button" onclick="setFormType('income')" id="type-income" class="type-btn flex-1 py-2 text-sm font-bold rounded-xl transition-all text-slate-500">收入</button>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-xs font-bold text-slate-400 uppercase ml-1">金額</label>
+                    <div class="relative">
+                        <div class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</div>
+                        <input type="number" id="form-amount" required placeholder="0.00" class="w-full bg-slate-50 border-none rounded-2xl py-4 pl-10 pr-4 text-2xl font-black text-slate-800 focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-400 uppercase ml-1">分類</label>
+                        <select id="form-category" class="w-full bg-slate-50 border-none rounded-xl p-3 text-sm font-medium focus:ring-2 focus:ring-indigo-500">
+                            <!-- Categories will be injected -->
+                        </select>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-400 uppercase ml-1">日期</label>
+                        <input type="date" id="form-date" required class="w-full bg-slate-50 border-none rounded-xl p-3 text-sm font-medium focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-xs font-bold text-slate-400 uppercase ml-1">備註</label>
+                    <input type="text" id="form-note" placeholder="寫點什麼..." class="w-full bg-slate-50 border-none rounded-xl p-3 text-sm font-medium focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-bold text-lg shadow-lg shadow-indigo-100 transition-all active:scale-[0.98] mt-4">確認新增</button>
+            </form>
+        </div>
+    </div>
+
+    <footer class="max-w-6xl mx-auto px-4 py-12 text-center text-slate-400 text-xs">
+        <p>© 2024 FinVision Pro • 您的私人智慧財務管家</p>
+        <p class="mt-1 font-mono">Secure Cloud Sync Active</p>
+    </footer>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, doc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+        // Global State
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'finvision-pro';
+        
+        let currentUser = null;
+        let transactions = [];
+        let currentFilter = 'all';
+        let formType = 'expense';
+        let trendChart = null;
+        let categoryChart = null;
+
+        const CATEGORIES = [
+            { name: '餐飲飲食', icon: 'utensils', color: '#F87171' },
+            { name: '交通運輸', icon: 'car', color: '#60A5FA' },
+            { name: '居家生活', icon: 'home', color: '#34D399' },
+            { name: '休閒娛樂', icon: 'shopping-bag', color: '#FBBF24' },
+            { name: '醫療保健', icon: 'heart', color: '#F472B6' },
+            { name: '其他支出', icon: 'more-horizontal', color: '#94A3B8' },
+            { name: '薪資收入', icon: 'dollar-sign', color: '#10B981' },
+        ];
+
+        // UI Initializers
+        function initUI() {
+            lucide.createIcons();
+            const catSelect = document.getElementById('form-category');
+            CATEGORIES.forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat.name;
+                opt.textContent = cat.name;
+                catSelect.appendChild(opt);
+            });
+            document.getElementById('form-date').value = new Date().toISOString().split('T')[0];
+        }
+
+        // Auth
+        async function initAuth() {
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                await signInWithCustomToken(auth, __initial_auth_token);
+            } else {
+                await signInAnonymously(auth);
+            }
+            onAuthStateChanged(auth, user => {
+                currentUser = user;
+                if (user) {
+                    document.getElementById('user-display').textContent = `UID: ${user.uid.slice(0, 8)}...`;
+                    listenToTransactions();
+                }
+            });
+        }
+
+        // Firestore Listeners
+        function listenToTransactions() {
+            if (!currentUser) return;
+            const q = query(collection(db, 'artifacts', appId, 'users', currentUser.uid, 'transactions'));
+            onSnapshot(q, (snapshot) => {
+                transactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+                    .sort((a, b) => new Date(b.date) - new Date(a.date));
+                updateDashboard();
+            }, (err) => console.error("Firestore Error:", err));
+        }
+
+        // Logic & Updates
+        function updateDashboard() {
+            const income = transactions.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0);
+            const expense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0);
+            
+            document.getElementById('total-balance').textContent = `$${(income - expense).toLocaleString()}`;
+            document.getElementById('total-income').textContent = `$${income.toLocaleString()}`;
+            document.getElementById('total-expense').textContent = `$${expense.toLocaleString()}`;
+
+            renderList();
+            renderCharts(income, expense);
+        }
+
+        function renderList() {
+            const listContainer = document.getElementById('transaction-list');
+            listContainer.innerHTML = '';
+            
+            const filtered = transactions.filter(t => currentFilter === 'all' || t.type === currentFilter);
+            
+            if (filtered.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="p-12 text-center">
+                        <div class="bg-slate-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300">
+                            <i data-lucide="credit-card" size="32"></i>
+                        </div>
+                        <p class="text-slate-500">還沒有任何紀錄喔</p>
+                    </div>`;
+                lucide.createIcons();
+                return;
+            }
+
+            filtered.forEach(t => {
+                const cat = CATEGORIES.find(c => c.name === t.category) || CATEGORIES[5];
+                const item = document.createElement('div');
+                item.className = 'p-4 flex items-center justify-between hover:bg-slate-50/50 transition-colors group';
+                item.innerHTML = `
+                    <div class="flex items-center gap-4">
+                        <div class="p-3 rounded-2xl ${t.type === 'income' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-600'}">
+                            <i data-lucide="${cat.icon}" size="20"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-slate-800">${t.category}</h4>
+                            <div class="flex items-center gap-2 text-xs text-slate-400">
+                                <i data-lucide="calendar" size="12"></i>
+                                <span>${t.date}</span>
+                                ${t.note ? `<span>• ${t.note}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <span class="font-black text-lg ${t.type === 'income' ? 'text-emerald-600' : 'text-slate-800'}">
+                            ${t.type === 'income' ? '+' : '-'}$${Number(t.amount).toLocaleString()}
+                        </span>
+                        <button class="delete-btn opacity-0 group-hover:opacity-100 p-2 text-slate-300 hover:text-rose-500 transition-all hover:bg-rose-50 rounded-lg" data-id="${t.id}">
+                            <i data-lucide="trash-2" size="18"></i>
+                        </button>
+                    </div>
+                `;
+                item.querySelector('.delete-btn').onclick = () => handleDelete(t.id);
+                listContainer.appendChild(item);
+            });
+            lucide.createIcons();
+        }
+
+        async function handleDelete(id) {
+            if (!currentUser) return;
+            try {
+                await deleteDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'transactions', id));
+            } catch (e) { console.error(e); }
+        }
+
+        function renderCharts(incomeTotal, expenseTotal) {
+            // Trend Chart Logic
+            const last7Days = [...Array(7)].map((_, i) => {
+                const d = new Date();
+                d.setDate(d.getDate() - (6 - i));
+                const dateStr = d.toISOString().split('T')[0];
+                const dayInc = transactions.filter(t => t.date === dateStr && t.type === 'income').reduce((s, t) => s + Number(t.amount), 0);
+                const dayExp = transactions.filter(t => t.date === dateStr && t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0);
+                return { date: dateStr.slice(5), inc: dayInc, exp: dayExp };
+            });
+
+            const ctxTrend = document.getElementById('trendChart').getContext('2d');
+            if (trendChart) trendChart.destroy();
+            trendChart = new Chart(ctxTrend, {
+                type: 'line',
+                data: {
+                    labels: last7Days.map(d => d.date),
+                    datasets: [
+                        { label: '收入', data: last7Days.map(d => d.inc), borderColor: '#10B981', tension: 0.4, fill: true, backgroundColor: 'rgba(16, 185, 129, 0.05)' },
+                        { label: '支出', data: last7Days.map(d => d.exp), borderColor: '#F43F5E', tension: 0.4, fill: true, backgroundColor: 'rgba(244, 63, 94, 0.05)' }
+                    ]
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { display: false }, x: { grid: { display: false } } }
+                }
+            });
+
+            // Category Chart Logic
+            const catData = CATEGORIES.filter(c => c.name !== '薪資收入').map(cat => {
+                const val = transactions.filter(t => t.category === cat.name && t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0);
+                return { name: cat.name, val, color: cat.color };
+            }).filter(c => c.val > 0);
+
+            const ctxCat = document.getElementById('categoryChart').getContext('2d');
+            if (categoryChart) categoryChart.destroy();
+            categoryChart = new Chart(ctxCat, {
+                type: 'doughnut',
+                data: {
+                    labels: catData.map(c => c.name),
+                    datasets: [{ data: catData.map(c => c.val), backgroundColor: catData.map(c => c.color), borderWeight: 0, hoverOffset: 10 }]
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 6, font: { size: 10 } } } },
+                    cutout: '70%'
+                }
+            });
+        }
+
+        // Global functions for HTML interaction
+        window.toggleModal = (show) => {
+            const m = document.getElementById('modal');
+            m.classList.toggle('hidden', !show);
+        };
+
+        window.setFormType = (type) => {
+            formType = type;
+            document.getElementById('type-expense').className = `type-btn flex-1 py-2 text-sm font-bold rounded-xl transition-all ${type === 'expense' ? 'bg-white text-rose-500 shadow-sm' : 'text-slate-500'}`;
+            document.getElementById('type-income').className = `type-btn flex-1 py-2 text-sm font-bold rounded-xl transition-all ${type === 'income' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500'}`;
+            document.getElementById('form-category').value = type === 'income' ? '薪資收入' : '餐飲飲食';
+        };
+
+        window.setFilter = (filter) => {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                const isActive = btn.dataset.filter === filter;
+                btn.className = `filter-btn px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${isActive ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`;
+            });
+            renderList();
+        };
+
+        document.getElementById('transaction-form').onsubmit = async (e) => {
+            e.preventDefault();
+            if (!currentUser) return;
+            const payload = {
+                amount: Number(document.getElementById('form-amount').value),
+                category: document.getElementById('form-category').value,
+                date: document.getElementById('form-date').value,
+                note: document.getElementById('form-note').value,
+                type: formType,
+                timestamp: serverTimestamp()
+            };
+            try {
+                await addDoc(collection(db, 'artifacts', appId, 'users', currentUser.uid, 'transactions'), payload);
+                toggleModal(false);
+                e.target.reset();
+                document.getElementById('form-date').value = new Date().toISOString().split('T')[0];
+                setFormType('expense');
+            } catch (err) { console.error(err); }
+        };
+
+        // Initialize Everything
+        window.onload = () => {
+            initUI();
+            initAuth();
+        };
+    </script>
+</body>
+</html>
