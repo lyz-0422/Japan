@@ -1,237 +1,227 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>智能記帳財務分析系統（升級美化版）</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<style>
-body {
-  font-family: 'Noto Sans TC', sans-serif;
-  margin: 0;
-  background: #eef2f7;
-  color: #2c3e50;
-}
-
-header {
-  margin: 20px;
-  padding: 20px 30px;
-  border-radius: 20px;
-  background: #f8fafc;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.05);
-  font-size: 22px;
-  font-weight: 600;
-}
-
-.container {
-  max-width: 1200px;
-  margin: auto;
-  padding: 10px 20px;
-}
-
-.card {
-  background: #f8fafc;
-  border-radius: 20px;
-  padding: 20px;
-  margin-bottom: 20px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.05);
-}
-
-input, select {
-  padding: 10px;
-  border-radius: 10px;
-  border: 1px solid #d0d7e2;
-  background: white;
-}
-
-button {
-  padding: 10px 16px;
-  border-radius: 10px;
-  border: none;
-  background: #6c7a89;
-  color: white;
-  cursor: pointer;
-}
-
-button:hover {
-  opacity: 0.9;
-}
-
-.summary {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 15px;
-}
-
-.summary-card {
-  background: #ffffff;
-  padding: 15px;
-  border-radius: 16px;
-  box-shadow: inset 0 0 0 1px #e5e9f2;
-}
-
-.summary-card h4 {
-  margin: 0;
-  font-size: 14px;
-  color: #7b8a9a;
-}
-
-.summary-card p {
-  margin: 5px 0 0;
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.table th, .table td {
-  padding: 12px;
-  text-align: left;
-}
-
-.table tr {
-  border-bottom: 1px solid #e5e9f2;
-}
-
-.income { color: #2ecc71; }
-.expense { color: #e74c3c; }
-
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2026 京阪神奈家族旅遊</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        :root {
+            --primary: #2196F3;
+            --bg: #f5f7fa;
+            --card-bg: #ffffff;
+            --text: #333;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding-bottom: 50px;
+        }
+        header {
+            background: var(--primary);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .tabs {
+            display: flex;
+            overflow-x: auto;
+            background: white;
+            padding: 10px 5px;
+            gap: 10px;
+            sticky;
+            top: 55px;
+            z-index: 99;
+        }
+        .tab-btn {
+            padding: 8px 15px;
+            border: 1px solid var(--primary);
+            border-radius: 20px;
+            white-space: nowrap;
+            background: white;
+            color: var(--primary);
+            font-weight: bold;
+        }
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+        .content {
+            padding: 15px;
+        }
+        .day-title {
+            font-size: 1.5rem;
+            color: var(--primary);
+            margin-bottom: 15px;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 5px;
+        }
+        .timeline {
+            border-left: 3px solid #ddd;
+            margin-left: 10px;
+            padding-left: 20px;
+            position: relative;
+        }
+        .event {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            position: relative;
+        }
+        .event::before {
+            content: '';
+            width: 12px;
+            height: 12px;
+            background: var(--primary);
+            border-radius: 50%;
+            position: absolute;
+            left: -29.5px;
+            top: 20px;
+        }
+        .time {
+            font-weight: bold;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        .spot {
+            font-size: 1.2rem;
+            font-weight: bold;
+            display: block;
+            margin: 5px 0;
+            color: #000;
+            text-decoration: none;
+        }
+        .spot-link { color: var(--primary); text-decoration: underline; }
+        .note {
+            font-size: 0.95rem;
+            color: #d32f2f;
+            background: #fff3e0;
+            padding: 5px;
+            border-radius: 4px;
+        }
+        .shopping-item {
+            display: flex;
+            align-items: center;
+            background: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+        }
+        input[type="checkbox"] {
+            transform: scale(1.5);
+            margin-right: 15px;
+        }
+        .done { text-decoration: line-through; color: #888; }
+    </style>
 </head>
 <body>
+    <div id="app">
+        <header>
+            <h1>✈️ 2026 京阪神奈</h1>
+            <div style="font-size: 0.8rem;">7/18 - 7/26 家族出遊版</div>
+        </header>
 
-<header>📊 智能記帳財務分析系統</header>
+        <div class="tabs">
+            <button v-for="n in 9" :key="n" 
+                    @click="currentDay = n" 
+                    :class="['tab-btn', { active: currentDay === n }]">
+                Day {{ n }}
+            </button>
+            <button @click="currentDay = 'buy'" :class="['tab-btn', { active: currentDay === 'buy' }]">🛒 購物清單</button>
+        </div>
 
-<div class="container">
+        <div class="content">
+            <div v-if="typeof currentDay === 'number'">
+                <div class="day-title">{{ trip[currentDay-1].date }} {{ trip[currentDay-1].title }}</div>
+                <div class="timeline">
+                    <div v-for="item in trip[currentDay-1].events" :key="item.time" class="event">
+                        <span class="time">{{ item.time }}</span>
+                        <a v-if="item.map" :href="item.map" target="_blank" class="spot spot-link">📍 {{ item.spot }}</a>
+                        <span v-else class="spot">{{ item.spot }}</span>
+                        <div v-if="item.note" class="note">💡 {{ item.note }}</div>
+                    </div>
+                </div>
+            </div>
 
-<div class="card">
-<h3>新增記帳</h3>
-<input type="date" id="date">
-<input type="text" id="desc" placeholder="項目">
-<input type="number" id="amount" placeholder="金額">
-<select id="type">
-<option value="income">收入</option>
-<option value="expense">支出</option>
-</select>
-<button onclick="addRecord()">新增</button>
-</div>
+            <div v-if="currentDay === 'buy'">
+                <div class="day-title">大家要買的東西</div>
+                <div v-for="(item, index) in shoppingList" :key="index" class="shopping-item">
+                    <input type="checkbox" v-model="item.bought" @change="saveList">
+                    <span :class="{ done: item.bought }">{{ item.name }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
 
-<div class="card">
-<h3>財務摘要</h3>
-<div class="summary">
-  <div class="summary-card">
-    <h4>收入</h4>
-    <p id="totalIncome" class="income">0</p>
-  </div>
-  <div class="summary-card">
-    <h4>支出</h4>
-    <p id="totalExpense" class="expense">0</p>
-  </div>
-  <div class="summary-card">
-    <h4>結餘</h4>
-    <p id="balance">0</p>
-  </div>
-</div>
-</div>
-
-<div class="card">
-<h3>記帳紀錄</h3>
-<table class="table">
-<thead>
-<tr><th>日期</th><th>項目</th><th>類型</th><th>金額</th><th>操作</th></tr>
-</thead>
-<tbody id="recordTable"></tbody>
-</table>
-</div>
-
-<div class="card">
-<h3>財務分析</h3>
-<canvas id="chart"></canvas>
-</div>
-
-</div>
-
-<script>
-let records = JSON.parse(localStorage.getItem('records')) || [];
-
-function save() {
-  localStorage.setItem('records', JSON.stringify(records));
-}
-
-function addRecord() {
-  const date = document.getElementById('date').value;
-  const desc = document.getElementById('desc').value;
-  const amount = parseFloat(document.getElementById('amount').value);
-  const type = document.getElementById('type').value;
-
-  if (!date || !desc || !amount) {
-    alert('請填寫完整');
-    return;
-  }
-
-  records.push({ date, desc, amount, type });
-  save();
-  render();
-}
-
-function deleteRecord(index) {
-  records.splice(index, 1);
-  save();
-  render();
-}
-
-function render() {
-  const table = document.getElementById('recordTable');
-  table.innerHTML = '';
-
-  let income = 0;
-  let expense = 0;
-
-  records.forEach((r, i) => {
-    if (r.type === 'income') income += r.amount;
-    else expense += r.amount;
-
-    table.innerHTML += `
-      <tr>
-        <td>${r.date}</td>
-        <td>${r.desc}</td>
-        <td class="${r.type}">${r.type}</td>
-        <td class="${r.type}">${r.amount}</td>
-        <td><button onclick="deleteRecord(${i})">刪除</button></td>
-      </tr>
-    `;
-  });
-
-  document.getElementById('totalIncome').innerText = income;
-  document.getElementById('totalExpense').innerText = expense;
-  document.getElementById('balance').innerText = income - expense;
-
-  drawChart(income, expense);
-}
-
-let chart;
-function drawChart(income, expense) {
-  const ctx = document.getElementById('chart').getContext('2d');
-
-  if (chart) chart.destroy();
-
-  chart = new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      labels: ['收入', '支出'],
-      datasets: [{
-        data: [income, expense]
-      }]
-    }
-  });
-}
-
-render();
-</script>
-
+    <script>
+        const { createApp } = Vue;
+        createApp({
+            data() {
+                return {
+                    currentDay: 1,
+                    shoppingList: [
+                        { name: "小倉山莊 (仙貝)", bought: false },
+                        { name: "龜屋良長 (羊羹)", bought: false },
+                        { name: "合利他命 EX Plus", bought: false },
+                        { name: "日本限定零食", bought: false }
+                    ],
+                    trip: [
+                        { date: "7/18 (六)", title: "抵達京都 & 宇治", events: [
+                            { time: "06:40", spot: "桃園機場起飛 (IT210)", note: "提早2小時抵達櫃檯" },
+                            { time: "11:44", spot: "搭乘 HARUKA", note: "往京都車站" },
+                            { time: "16:10", spot: "宇治上神社", map: "https://maps.app.goo.gl/9R6X2" },
+                            { time: "18:00", spot: "京都車站晚餐", note: "Porta 地下街或拉麵小路" }
+                        ]},
+                        { date: "7/19 (日)", title: "伏見 & 清水寺", events: [
+                            { time: "07:30", spot: "伏見稻荷大社", note: "趁早避開人潮" },
+                            { time: "11:00", spot: "清水寺區域", note: "二年坂、三年坂、八坂神社" },
+                            { time: "17:00", spot: "錦市場", note: "17:00 開始收攤，要注意時間" }
+                        ]},
+                        { date: "7/20 (一)", title: "嵐山 & 二條城", events: [
+                            { time: "09:00", spot: "嵐山渡月橋 / 竹林", note: "可搭小火車" },
+                            { time: "14:30", spot: "二條城", note: "最後入場 16:00" }
+                        ]},
+                        { date: "7/21 (二)", title: "京都採買日", events: [
+                            { time: "10:00", spot: "小倉山莊 / 龜屋良長", note: "買完回飯店放行李" }
+                        ]},
+                        { date: "7/22 (三)", title: "京都 -> 奈良 -> 大阪", events: [
+                            { time: "09:30", spot: "奈良公園 / 春日大社", note: "小心鹿群搶仙貝" },
+                            { time: "16:00", spot: "難波飯店 Check-in" }
+                        ]},
+                        { date: "7/23 (四)", title: "環球影城 USJ", events: [
+                            { time: "06:30", spot: "出發往 USJ", note: "記得先下載 App 抽整理券" }
+                        ]},
+                        { date: "7/24 (五)", title: "神戶一日遊", events: [
+                            { time: "10:00", spot: "神戶港 / 北野異人館", note: "使用 City Loop 巴士" }
+                        ]},
+                        { date: "7/25 (六)", title: "大阪購物 & 黑門市場", events: [
+                            { time: "09:00", spot: "黑門市場", note: "吃海鮮早餐" },
+                            { time: "14:00", spot: "心齋橋 / 難波", note: "最後大補貨" }
+                        ]},
+                        { date: "7/26 (日)", title: "歸賦", events: [
+                            { time: "08:30", spot: "關西機場 (KIX)", note: "IT211 11:45 起飛" }
+                        ]}
+                    ]
+                }
+            },
+            mounted() {
+                const saved = localStorage.getItem('family_shop');
+                if (saved) this.shoppingList = JSON.parse(saved);
+            },
+            methods: {
+                saveList() {
+                    localStorage.setItem('family_shop', JSON.stringify(this.shoppingList));
+                }
+            }
+        }).mount('#app')
+    </script>
 </body>
 </html>
